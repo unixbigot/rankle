@@ -1,0 +1,3 @@
+# Copy this to .envrc and source it, or use the 'direnv' tool
+export APIURL="https://my.server.url.here/"
+export APITOKEN="MY_TOKEN_HERE"
