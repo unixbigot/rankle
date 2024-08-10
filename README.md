@@ -18,7 +18,7 @@ Toot 112928492034667014 at 2024-08-08T21:20:39.104000+00:00: 13 retoots, 18 fave
 Toot 112923259880042838 at 2024-08-07T23:10:02.761000+00:00: 10 retoots, 20 faves
      <p>I PUT IT TO YOU, Mr Maggot that you were seen—by the witnesses from w
     Reblogged by
-        JessTheUnstill@infosec.exchange (Jess👾), followed by 3890 follows 996
+        JessTheUnstill@infosec.exchange (Jess👾), followed by REDACTED follows 996
         futzle@old.mermaid.town (Deborah Pickett), followed by 2770 follows 955
         stufromoz (Helpdesk Stu), followed by 1161 follows 611
 
