@@ -32,6 +32,26 @@ Toot 112922750541447114 at 2024-08-07T21:00:30.870000+00:00: 11 retoots, 24 fave
 Options (use --help) help can be used to control which toots are inspected and what cutoffs
 to use for follower count etc.
 
+```
+❯ ./rankle.py --help
+usage: rankle.py [-h] [-c [COUNT]] [-v] [--base [BASE]] [--tagged TAGGED] [--retoots RETOOTS] [--top TOP] [--followers FOLLOWERS] [--token [TOKEN]]
+
+Rank toots by popularity
+
+options:
+  -h, --help            show this help message and exit
+  -c [COUNT], --count [COUNT]
+                        number of toots to examine
+  -v, --verbose         include extra detail
+  --base [BASE]         api base url
+  --tagged TAGGED       consider toots with tag
+  --retoots RETOOTS     consider toots with at least N retoots
+  --top TOP             describe the top N retooters
+  --followers FOLLOWERS
+                        highlight retooters with at least N followers
+  --token [TOKEN]       api authentication token
+```
+
 ## Advanced usage
 
 Inspect the last `500` toots that are tagged `#MicroFiction` and have at
