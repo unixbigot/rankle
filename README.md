@@ -1,7 +1,7 @@
 # Rankle - find out why you have gone metaviral
 
 This program uses the python mastodon api to look at toots and determine which are the 
-accounts with the highest follower count that retooted you.
+accounts with the highest follower count that boosted you.
 
 The intent is to answer "halp, why have my notifications assplode"
 
@@ -21,19 +21,19 @@ The intent is to answer "halp, why have my notifications assplode"
 ```
 ❯ ./rankle.py
 got 20 toots
-Toot 112928492034667014 at 2024-08-08T21:20:39.104000+00:00: 13 retoots, 18 faves
+Toot 112928492034667014 at 2024-08-08T21:20:39.104000+00:00: 13 boosts, 18 faves
      <p>SAN JOSÉ (AP) - AI startup upgrad.er offers an innovative air travel
     Reblogged by
         futzle@old.mermaid.town (Deborah Pickett), followed by 2770 follows 955
 
-Toot 112923259880042838 at 2024-08-07T23:10:02.761000+00:00: 10 retoots, 20 faves
+Toot 112923259880042838 at 2024-08-07T23:10:02.761000+00:00: 10 boost, 20 faves
      <p>I PUT IT TO YOU, Mr Maggot that you were seen—by the witnesses from w
     Reblogged by
         JessTheUnstill@infosec.exchange (Jess👾), followed by REDACTED follows 996
         futzle@old.mermaid.town (Deborah Pickett), followed by 2770 follows 955
         stufromoz (Helpdesk Stu), followed by 1161 follows 611
 
-Toot 112922750541447114 at 2024-08-07T21:00:30.870000+00:00: 11 retoots, 24 faves
+Toot 112922750541447114 at 2024-08-07T21:00:30.870000+00:00: 11 boosts, 24 faves
      <p>Who called it “The Return of the King” when “Gondor Reveal Party” was
     Reblogged by
         futzle@old.mermaid.town (Deborah Pickett), followed by 2770 follows 955
@@ -45,7 +45,7 @@ to use for follower count etc.
 
 ```
 ❯ ./rankle.py --help
-usage: rankle.py [-h] [-c [COUNT]] [-v] [--base [BASE]] [--tagged TAGGED] [--retoots RETOOTS] [--top TOP] [--followers FOLLOWERS] [--token [TOKEN]]
+usage: rankle.py [-h] [-c [COUNT]] [-v] [--base [BASE]] [--tagged TAGGED] [--boosts BOOSTS] [--top TOP] [--followers FOLLOWERS] [--token [TOKEN]]
 
 Rank toots by popularity
 
@@ -56,10 +56,10 @@ options:
   -v, --verbose         include extra detail
   --base [BASE]         api base url
   --tagged TAGGED       consider toots with tag
-  --retoots RETOOTS     consider toots with at least N retoots
-  --top TOP             describe the top N retooters
+  --boosts BOOSTS       consider toots with at least N boosts
+  --top TOP             describe the top N boosters
   --followers FOLLOWERS
-                        highlight retooters with at least N followers
+                        highlight boosters with at least N followers
   --token [TOKEN]       api authentication token
 ```
 
@@ -71,8 +71,8 @@ least `100 boosts`, printing out the top boosters that have more than
 
 ```
 on No in rankle on  main [!?⇣] via 🐍 v3.12.4
-❯ ./rankle.py --count 500 --followers 1000 --retoots 100 --tagged microfiction
-Toot 112685247251950487 at 2024-06-26T22:20:18.274000+00:00: 159 retoots, 221 faves
+❯ ./rankle.py --count 500 --followers 1000 --boosts 100 --tagged microfiction
+Toot 112685247251950487 at 2024-06-26T22:20:18.274000+00:00: 159 boosts, 221 faves
      <p>The Unicode Consortium announces release 17.2.0 of the Unicode standa
     Tagged tootfic microfiction poweronstorytoot
     Significant boosters:
@@ -83,7 +83,7 @@ Toot 112685247251950487 at 2024-06-26T22:20:18.274000+00:00: 159 retoots, 221 fa
         oblomov@sociale.network (Oblomov), followed by 1234 follows 314
         quincy@chaos.social (Quincy), followed by 1052 follows 4325
 
-Toot 112492699120335077 at 2024-05-23T22:12:46.949000+00:00: 104 retoots, 199 faves
+Toot 112492699120335077 at 2024-05-23T22:12:46.949000+00:00: 104 boosts, 199 faves
      <p>The cheque said “AMOUNT: two dollars and forty cents BEING FOR: class
     Tagged tootfic microfiction poweronstorytoot
     Significant boosters:
