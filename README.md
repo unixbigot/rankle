@@ -5,6 +5,15 @@ accounts with the highest follower count that retooted you.
 
 The intent is to answer "halp, why have my notifications assplode"
 
+## Initial setup:
+
+1. Create an API token:
+   1. On Mastoton: Preferences > Development > New application.
+   2. Create a new application, only the `read` scope is needed.
+   3. Note the value of "Your access token".
+2. Copy `envrc-example` to `.env` and fill in the values.
+3. Install Python dependencies: `pip install -r requirements.txt`.
+
 ## Example usage:
 
 ```
