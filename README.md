@@ -5,6 +5,8 @@ accounts with the highest follower count that retooted you.
 
 The intent is to answer "halp, why have my notifications assplode"
 
+(I'm not a day to day Python coder, your corrections to my baby-talk Python are welcome)
+
 ## Initial setup:
 
 1. Create an API token:
