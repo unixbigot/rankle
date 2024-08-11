@@ -81,18 +81,18 @@ def remove_author(t):
 
 
 # Get the last {count} toots from an author (possibly restricting to tag {tagged} (no hash))
-def get_last_toots(toot_id, count=100, tagged=None, min_boosts=0):
+def get_last_toots(author_id, count=100, tagged=None, min_boosts=0):
     # max_id tracks the most recent fetched toot, allowing us to get pages of older toots
     max_id = None
 
-    # result will be accumulated in the {toots} array
+    # result will be accumulated in the {result_toots} array
     result_toots = []
 
     # We fetch pages of toots until we run out of results or surpass {count}
     while len(result_toots) < count:
 
         # Get a/next page of results
-        new_toots = mastodon.account_statuses(id=toot_id, max_id=max_id, exclude_replies=True, exclude_reblogs=True, tagged=tagged)
+        new_toots = mastodon.account_statuses(id=author_id, max_id=max_id, exclude_replies=True, exclude_reblogs=True, tagged=tagged)
         if args.verbose>1: print(f"  got {len(new_toots)} toots")
 
         # quit collating toots if we have reached the end of the paginated results
@@ -114,8 +114,8 @@ def get_last_toots(toot_id, count=100, tagged=None, min_boosts=0):
 
 
 #
-# Get the list of boosters of toot with {toot_id}, f
-# iltering by {min_followers} (ignoring self-boosts by {author}
+# Get the list of boosters of toot with {toot_id}, 
+# filtering by {min_followers} (ignoring self-boosts by {author}
 #
 def get_reblogs(toot_id, min_followers=args.followers, limit=args.top, author=None):
     pageno = 1
@@ -163,15 +163,23 @@ def describe_boosts(t, slice_len=72):
         for a in reblogs: describe_acct(a)
     print("")
 
-me=mastodon.me()
-
-
+#
+# Main entry point
+#
 # fetch all toots (maybe filtering for ones with tag)
+#
+
 # the mastodon api returns tagged lowercase, so, lowercase the tag argument to match that
 if args.tagged:
     args.tagged = args.tagged.lower()
     if args.verbose: print(f"Fetching toots matching #{args.tagged}")
-toots = get_last_toots(me.id, count=args.count, tagged=args.tagged)
+
+# Get the list of toots-of-interest, and sort it if the the -m option was used
+toots = get_last_toots(mastodon.me().id, count=args.count, tagged=args.tagged)
 if args.most_boosted_first: toots.sort(key=toot_boosts,reverse=True)
+
+#
+# Print out a summary of the toots and their boosters
+#
 for toot in toots: describe_boosts(toot)
 
