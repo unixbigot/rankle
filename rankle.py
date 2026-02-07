@@ -25,6 +25,7 @@ from mastodon import Mastodon
 
 parser = argparse.ArgumentParser(description="Rank toots by popularity")
 #parser.add_argument("ids", metavar="N", type=int, nargs="+", help="toot IDs to query")
+parser.add_argument('-a', '--archive', help="Archive toots to files in specified folder")
 parser.add_argument('-c', '--count',
                     type=int, nargs="?", default=20,
                     help="number of toots to examine")
@@ -164,6 +165,32 @@ def describe_boosts(t, slice_len=72):
     print("")
 
 #
+# Acrchive a toot to a file suitable for representation as a Hugo blog entry
+#
+def archive_toot(t):
+    stamp = t.created_at.strftime('%Y%m%dT%H%M')
+    pubdate = t.created_at.strftime('%Y-%m-%d')
+    mdpath = f"{args.archive}/{stamp}.md"
+    if os.path.exists(mdpath):
+        if args.verbose>1: print(f"mdpath already exists")
+        return
+    if args.verbose:
+        print(f"Archive toot {t.id} at {stamp}: {t.reblogs_count} boosts, {t.favourites_count} faves to {mdpath}")
+        #if args.verbose>1: pp.pprint(t)
+    with open(mdpath, "x") as f:
+        tagstr = " ".join([f"#{tag.name}" for tag in t.tags])
+        f.write('+++\n')
+        f.write(f'date = {t.created_at.strftime("%Y-%m-%d")}\n')
+        f.write(f'title = "Mastodon post {pubdate}"\n')
+        f.write(f'summary = "{tagstr}"\n')
+        f.write('+++\n')
+        f.write(t.content)
+        f.close()
+
+#        print(f"Archive toot {t.id} at {t.created_at.isoformat()}: {t.reblogs_count} boosts, {t.favourites_count} faves")
+
+
+#
 # Main entry point
 #
 # fetch all toots (maybe filtering for ones with tag)
@@ -181,5 +208,10 @@ if args.most_boosted_first: toots.sort(key=toot_boosts,reverse=True)
 #
 # Print out a summary of the toots and their boosters
 #
-for toot in toots: describe_boosts(toot)
+if args.archive:
+    print(f"archiving {len(toots)} toots")
+    for toot in toots: archive_toot(toot)
+else:    
+    for toot in toots: describe_boosts(toot)
+    
 
