@@ -51,6 +51,8 @@ Rank toots by popularity
 
 options:
   -h, --help            show this help message and exit
+  -a, --archive ARCHIVE
+                        Archive toots to files in specified folder
   -c [COUNT], --count [COUNT]
                         number of toots to examine
   -v, --verbose         include extra detail
@@ -96,4 +98,13 @@ Toot 112492699120335077 at 2024-05-23T22:12:46.949000+00:00: 104 boosts, 199 fav
 		follows 351
 		
 etc.etc.		
+```
+
+## Blog archiving
+
+Extract toots matching some search pattern and save each toot to blog
+post file compatible with the Hugo blogging engine
+
+```
+./rankle.py -c0 --tagged microfiction -a Fiction
 ```
