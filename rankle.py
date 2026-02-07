@@ -89,7 +89,7 @@ def get_last_toots(author_id, count=100, tagged=None, min_boosts=0):
     result_toots = []
 
     # We fetch pages of toots until we run out of results or surpass {count}
-    while len(result_toots) < count:
+    while not count or len(result_toots) < count:
 
         # Get a/next page of results
         new_toots = mastodon.account_statuses(id=author_id, max_id=max_id, exclude_replies=True, exclude_reblogs=True, tagged=tagged)
@@ -101,7 +101,7 @@ def get_last_toots(author_id, count=100, tagged=None, min_boosts=0):
         # update the "oldest toot seen" filter -- FIXME: maybe should use fetch_next here?
         max_id = min_id(new_toots)
 
-        while len(new_toots) and len(result_toots)<count:
+        while len(new_toots) and (not count or len(result_toots)<count):
             # Loop over the page of toots and summarise some of the content
             # I'm sure there's a nicer way to do this in non-babytalk python
             candidate_toot = new_toots.pop(0)
