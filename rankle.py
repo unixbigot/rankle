@@ -18,6 +18,7 @@ import argparse
 import os
 import pprint
 from mastodon import Mastodon
+import yaml
 
 #
 # Command line arguments
@@ -31,6 +32,7 @@ parser.add_argument('-c', '--count',
                     help="number of toots to examine")
 parser.add_argument('-v', '--verbose', action="count", help="include extra detail",default=0)
 parser.add_argument('--base', help="api base url", nargs="?", default=os.environ["APIURL"])
+parser.add_argument('--config', help="configuration file", nargs="?", default='config.yaml')
 parser.add_argument('--boosts', help="consider toots with at least N boosts",type=int, default=10)
 parser.add_argument('--followers',
                     type=int, default=1000,
@@ -46,6 +48,17 @@ args = parser.parse_args()
 pp = pprint.PrettyPrinter(indent=4)
 if args.verbose>1:
     pp.pprint({"args":args})
+
+#
+# Load config if present
+#
+config = {}
+if args.config and os.path.exists(args.config):
+    with open(args.config, 'r') as cfgfile:
+        config = yaml.safe_load(cfgfile)
+        if args.verbose>1:
+            pp.pprint({"config":config})
+
 
 #
 # Get a mastodon api handle
@@ -82,7 +95,7 @@ def remove_author(t):
 
 
 # Get the last {count} toots from an author (possibly restricting to tag {tagged} (no hash))
-def get_last_toots(author_id, count=100, tagged=None, min_boosts=0):
+def get_last_toots(author_id, count=100, tagged=None, min_boosts=0, keep_author=False):
     # max_id tracks the most recent fetched toot, allowing us to get pages of older toots
     max_id = None
 
@@ -108,7 +121,10 @@ def get_last_toots(author_id, count=100, tagged=None, min_boosts=0):
             candidate_toot = new_toots.pop(0)
             if min_boosts and (candidate_toot.reblogs_count < min_boosts): continue
             candidate_toot.tag_names = tag_names(candidate_toot)
-            result_toots.append(remove_author(candidate_toot))
+            if not keep_author:
+                candidate_toot = remove_author(candidate_toot)
+            result_toots.append(candidate_toot)
+
 
     if args.verbose: print(f"got total of {len(result_toots)} toots")
     return result_toots
@@ -168,23 +184,42 @@ def describe_boosts(t, slice_len=72):
 # Acrchive a toot to a file suitable for representation as a Hugo blog entry
 #
 def archive_toot(t):
-    stamp = t.created_at.strftime('%Y%m%dT%H%M')
-    pubdate = t.created_at.strftime('%Y-%m-%d')
-    mdpath = f"{args.archive}/{stamp}.md"
+    global config
+    id = t.id
+    pubdate = t.created_at.astimezone().strftime('%a %d %b %Y')
+    mdpath = f"{args.archive}/{id}.md"
+    title = "Mastodon post"
+    if 'title' in config and id in config['title']:
+        title = config['title'][id]
     if os.path.exists(mdpath):
         if args.verbose>1: print(f"mdpath already exists")
         return
     if args.verbose:
-        print(f"Archive toot {t.id} at {stamp}: {t.reblogs_count} boosts, {t.favourites_count} faves to {mdpath}")
-        #if args.verbose>1: pp.pprint(t)
+        print(f"Archive toot {t.id} from {pubdate}: {t.reblogs_count} boosts, {t.favourites_count} faves to {mdpath}")
+        if args.verbose>2: pp.pprint(t)
+        pp.pprint({"config":config})
     with open(mdpath, "x") as f:
         tagstr = " ".join([f"#{tag.name}" for tag in t.tags])
         f.write('+++\n')
-        f.write(f'date = {t.created_at.strftime("%Y-%m-%d")}\n')
-        f.write(f'title = "Mastodon post {pubdate}"\n')
+        f.write(f'date = {t.created_at.astimezone().strftime("%Y-%m-%dT%H:%M:%S")}\n')
+        f.write(f'title = "{title}"\n')
         f.write(f'summary = "{tagstr}"\n')
         f.write('+++\n')
-        f.write(t.content)
+        f.write(f'{t.content}\n')
+        if 'archive' in config:
+            acfg = config['archive']
+            if acfg.get('stats', True):
+                stats = []
+                if (t.favourites_count): stats.append(f'{t.favourites_count}👍 ')
+                if (t.quotes_count): stats.append(f'{t.quotes_count}🙀 ')
+                if (t.reblogs_count): stats.append(f'{t.reblogs_count}📣')
+                if len(stats):
+                    f.write(f'<p>{' '.join(stats)}</p>\n')
+            if acfg.get('link', False):
+                f.write(f'<p><a href="{t.uri}">Original toot</a> by <a href="{t.account.uri}">{t.account.display_name}</a></p>\n')
+            if acfg.get('footer', False):
+                f.write(f'{acfg['footer']}\n')
+
         f.close()
 
 #        print(f"Archive toot {t.id} at {t.created_at.isoformat()}: {t.reblogs_count} boosts, {t.favourites_count} faves")
@@ -202,7 +237,7 @@ if args.tagged:
     if args.verbose: print(f"Fetching toots matching #{args.tagged}")
 
 # Get the list of toots-of-interest, and sort it if the the -m option was used
-toots = get_last_toots(mastodon.me().id, count=args.count, tagged=args.tagged)
+toots = get_last_toots(mastodon.me().id, count=args.count, tagged=args.tagged, keep_author=(args.archive != None))
 if args.most_boosted_first: toots.sort(key=toot_boosts,reverse=True)
 
 #

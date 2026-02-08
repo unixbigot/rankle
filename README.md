@@ -1,9 +1,12 @@
-# Rankle - find out why you have gone metaviral
+# Rankle - A mastodon helper to analyse and archive your own toots
 
-This program uses the python mastodon api to look at toots and determine which are the 
-accounts with the highest follower count that boosted you.
+This program uses the python mastodon api to look at your toots and determine which are the 
+accounts with the highest follower count that boosted you.   The
+program can also save your toots to a website format.
 
-The intent is to answer "halp, why have my notifications assplode"
+The motivation for writing this was to answer the question "halp, why
+have my notifications assplode" by looking at which high-profile
+fedifriends interacted with your toots.
 
 (I'm not a day to day Python coder, your corrections to my baby-talk Python are welcome)
 
@@ -13,8 +16,9 @@ The intent is to answer "halp, why have my notifications assplode"
    1. On Mastoton: Preferences > Development > New application.
    2. Create a new application, only the `read` scope is needed.
    3. Note the value of "Your access token".
-2. Copy `envrc-example` to `.env` and fill in the values.
-3. Install Python dependencies: `pip install -r requirements.txt`.
+2. Install Python dependencies: `pip install -r requirements.txt`.
+3. Copy `envrc-example` to `.env` and fill in the values.
+4. Maybe copy `config-example.yaml` to `config.yaml` if you want to customise archiving
 
 ## Example usage:
 
@@ -55,6 +59,7 @@ options:
                         Archive toots to files in specified folder
   -c [COUNT], --count [COUNT]
                         number of toots to examine
+  --config [CONFIG]     configuration file
   -v, --verbose         include extra detail
   --base [BASE]         api base url
   --tagged TAGGED       consider toots with tag
@@ -107,4 +112,14 @@ post file compatible with the Hugo blogging engine
 
 ```
 ./rankle.py -c0 --tagged microfiction -a Fiction
+```
+
+Archive content can be altered using a configuration file and the
+`--config` option (default `config.yaml`), eg
+
+```yaml
+archive:
+  footer: |-
+    <p><i>Commision a story or leave a tip at <a href="https://ko-fi.com/unixbigot">my ko-fi</a></i></p>
+  link: true
 ```
