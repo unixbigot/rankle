@@ -115,11 +115,14 @@ post file compatible with the Hugo blogging engine
 ```
 
 Archive content can be altered using a configuration file and the
-`--config` option (default `config.yaml`), eg
+`--config` option (default `config.yaml`), eg.
 
 ```yaml
 archive:
   footer: |-
     <p><i>Commision a story or leave a tip at <a href="https://ko-fi.com/unixbigot">my ko-fi</a></i></p>
   link: true
+  title:
+    112980344498645350: "Extra: Terroir"
+    112985239041797729: Damn Your Eyes
 ```

@@ -195,9 +195,9 @@ def archive_toot(t):
         if args.verbose>1: print(f"mdpath already exists")
         return
     if args.verbose:
-        print(f"Archive toot {t.id} from {pubdate}: {t.reblogs_count} boosts, {t.favourites_count} faves to {mdpath}")
+        print(f'Archive toot {t.id} "{title}" from {pubdate}: {t.reblogs_count} boosts, {t.favourites_count} faves to {mdpath}')
         if args.verbose>2: pp.pprint(t)
-        pp.pprint({"config":config})
+        #pp.pprint({"config":config})
     with open(mdpath, "x") as f:
         tagstr = " ".join([f"#{tag.name}" for tag in t.tags])
         f.write('+++\n')
