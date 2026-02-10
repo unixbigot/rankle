@@ -41,6 +41,7 @@ parser.add_argument('--followers',
 parser.add_argument('--tagged', help="consider toots with tag")
 parser.add_argument('-m', '--most-boosted-first',
                     help="sort by most-boosted-first",action="store_true")
+parser.add_argument('-n', '--noaction', help="Do not write/overwrite any files", action="store_true")
 parser.add_argument('--top', help="describe the top N boosters",type=int, default=5)
 parser.add_argument('--token', nargs="?", default=os.environ["APITOKEN"],
                     help="api authentication token (see server's prefs->dev->new app)")
@@ -57,7 +58,7 @@ config = {}
 if args.config and os.path.exists(args.config):
     with open(args.config, 'r') as cfgfile:
         config = yaml.safe_load(cfgfile)
-        if args.verbose>1:
+        if args.verbose>3:
             pp.pprint({"config":config})
 
 
@@ -132,7 +133,7 @@ def get_last_toots(author_id, count=100, tagged=None, min_boosts=0, keep_author=
 
 
 #
-# Get the list of boosters of toot with {toot_id}, 
+# Get the list of boosters of toot with {toot_id},
 # filtering by {min_followers} (ignoring self-boosts by {author}
 #
 def get_reblogs(toot_id, min_followers=args.followers, limit=args.top, author=None):
@@ -184,22 +185,54 @@ def describe_boosts(t, slice_len=72):
 #
 # Acrchive a toot to a file suitable for representation as a Hugo blog entry
 #
-def archive_toot(t, archdir):
+def archive_toot(t, archdir, noaction=False):
     global config
+    acfg = {}
+    context = None
     id = t.id
+    if 'archive' in config:
+        acfg = config['archive']
     pubdate = t.created_at.astimezone().strftime('%a %d %b %Y')
     mdpath = f"{archdir}/{id}.md"
     title = "Mastodon post"
     if 'title' in config and id in config['title']:
         title = config['title'][id]
-    if os.path.exists(mdpath):
+    if not noaction and os.path.exists(mdpath):
         if args.verbose>1: print(f"mdpath already exists")
         return
     if args.verbose:
-        print(f'Archive toot {t.id} "{title}" from {pubdate}: {t.reblogs_count} boosts, {t.favourites_count} faves to {mdpath}')
-        if args.verbose>2: pp.pprint(t)
+        print(f'Archive toot {t.id} "{title}" from {pubdate} ({t.reblogs_count} boosts, {t.favourites_count} faves {t.quotes_count} quotes, {t.replies_count} replies) to {mdpath}')
+
+    if acfg.get('replies', False):
+        if args.verbose>1: print(f'Look up context for {id}')
+        context = mastodon.status_context(id)
+        direct_thread=[id]
+        if args.verbose>3: pp.pprint({"context":context})
+        if 'descendants' in context:
+            for r in context.descendants:
+                # Only care about replies that are from the author
+                if not r.account.acct == t.account.acct: continue
+                r['author_id'] = r.account.id
+                r['acct'] = r.account.acct
+                del r['account']
+
+                # Only care about replies directly to the author (not replies to commenters)
+                if not r.in_reply_to_id in direct_thread: continue
+                direct_thread.append(r.in_reply_to_id)
+                if args.verbose>2: pp.pprint({"reply":r})
+                elif args.verbose>1: pp.pprint({"reply_from":r.acct,"content":r.content})
+                elif args.verbose: print(f'  Append threaded followup {r.id}')
+                # Append the followup to the toota
+                t['content'] += f'\n<hr>{r.content}'
+
+    if args.verbose>2:
+        pp.pprint(t)
         #pp.pprint({"config":config})
-    with open(mdpath, "x") as f:
+    mdmode='x'
+    if args.noaction:
+        mdpath = "/dev/stdout"
+        mdmode='w'
+    with open(mdpath, mdmode) as f:
         tagstr = " ".join([f"#{tag.name}" for tag in t.tags])
         f.write('+++\n')
         f.write(f'date = {t.created_at.astimezone().strftime("%Y-%m-%dT%H:%M:%S")}\n')
@@ -207,19 +240,19 @@ def archive_toot(t, archdir):
         f.write(f'summary = "{tagstr}"\n')
         f.write('+++\n')
         f.write(f'{t.content}\n')
-        if 'archive' in config:
-            acfg = config['archive']
-            if acfg.get('stats', True):
-                stats = []
-                if (t.favourites_count): stats.append(f'{t.favourites_count}👍 ')
-                if (t.quotes_count): stats.append(f'{t.quotes_count}🙀 ')
-                if (t.reblogs_count): stats.append(f'{t.reblogs_count}📣')
-                if len(stats):
-                    f.write(f'<p>{' '.join(stats)}</p>\n')
-            if acfg.get('link', False):
-                f.write(f'<p><a href="{t.uri}">Original toot</a> by <a href="{t.account.uri}">{t.account.display_name}</a></p>\n')
-            if acfg.get('footer', False):
-                f.write(f'{acfg['footer']}\n')
+        f.write(f'<hr>\n')
+        if acfg.get('stats', True):
+            stats = []
+            if (t.favourites_count): stats.append(f'{t.favourites_count}👍 ')
+            if (t.quotes_count): stats.append(f'{t.quotes_count}🙀 ')
+            if (t.reblogs_count): stats.append(f'{t.reblogs_count}📣')
+            if (t.replies_count): stats.append(f'{t.replies_count}🗣️')
+            if len(stats):
+                f.write(f'<p>{' '.join(stats)}</p>\n')
+        if acfg.get('link', False):
+            f.write(f'<p><a href="{t.uri}">Original toot</a> by <a href="{t.account.uri}">{t.account.display_name}</a></p>\n')
+        if acfg.get('footer', False):
+            f.write(f'{acfg['footer']}\n')
 
         f.close()
 
@@ -247,15 +280,14 @@ if args.most_boosted_first: toots.sort(key=toot_boosts,reverse=True)
 if args.archive:
     archdir = args.archive
     if re.match("/$", archdir): archdir = re.sub("/$","", archdir, 1)
-    if not os.path.exists(archdir):
-        if args.verbose: print(f'Creating directory {archdir}')
-        os.mkdir(archdir)
-    if not os.path.isdir(archdir):
-        print(f'ERROR: "{archdir}" is not a directory')
-        exit
+    if not args.noaction:
+        if not os.path.exists(archdir):
+            if args.verbose: print(f'Creating directory {archdir}')
+            os.mkdir(archdir)
+        if not os.path.isdir(archdir):
+            print(f'ERROR: "{archdir}" is not a directory')
+            exit
     print(f'archiving {len(toots)} toots to {archdir}')
-    for toot in toots: archive_toot(toot, archdir)
-else:    
+    for toot in toots: archive_toot(toot, archdir, noaction=args.noaction)
+else:
     for toot in toots: describe_boosts(toot)
-    
-

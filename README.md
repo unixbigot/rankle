@@ -62,11 +62,14 @@ options:
   --config [CONFIG]     configuration file
   -v, --verbose         include extra detail
   --base [BASE]         api base url
-  --tagged TAGGED       consider toots with tag
-  --boosts BOOSTS       consider toots with at least N boosts
-  --top TOP             describe the top N boosters
   --followers FOLLOWERS
                         highlight boosters with at least N followers
+  --tagged TAGGED       consider toots with tag
+  --boosts BOOSTS       consider toots with at least N boosts
+  -m, --most-boosted-first
+                        sort by most-boosted-first
+  -n, --noaction        Do not write/overwrite any files
+  --top TOP             describe the top N boosters
   --token [TOKEN]       api authentication token
 ```
 
@@ -108,7 +111,7 @@ etc.etc.
 ## Blog archiving
 
 Extract toots matching some search pattern and save each toot to blog
-post file compatible with the Hugo blogging engine
+post file compatible with the Hugo blogging engine:
 
 ```
 ./rankle.py -c0 --tagged microfiction -a Fiction
@@ -122,6 +125,8 @@ archive:
   footer: |-
     <p><i>Commision a story or leave a tip at <a href="https://ko-fi.com/unixbigot">my ko-fi</a></i></p>
   link: true
+  replies: true
+  stats: true
   title:
     112980344498645350: "Extra: Terroir"
     112985239041797729: Damn Your Eyes
