@@ -16,6 +16,7 @@
 
 import argparse
 import os
+import re
 import pprint
 from mastodon import Mastodon
 import yaml
@@ -183,11 +184,11 @@ def describe_boosts(t, slice_len=72):
 #
 # Acrchive a toot to a file suitable for representation as a Hugo blog entry
 #
-def archive_toot(t):
+def archive_toot(t, archdir):
     global config
     id = t.id
     pubdate = t.created_at.astimezone().strftime('%a %d %b %Y')
-    mdpath = f"{args.archive}/{id}.md"
+    mdpath = f"{archdir}/{id}.md"
     title = "Mastodon post"
     if 'title' in config and id in config['title']:
         title = config['title'][id]
@@ -244,8 +245,16 @@ if args.most_boosted_first: toots.sort(key=toot_boosts,reverse=True)
 # Print out a summary of the toots and their boosters
 #
 if args.archive:
-    print(f"archiving {len(toots)} toots")
-    for toot in toots: archive_toot(toot)
+    archdir = args.archive
+    if re.match("/$", archdir): archdir = re.sub("/$","", archdir, 1)
+    if not os.path.exists(archdir):
+        if args.verbose: print(f'Creating directory {archdir}')
+        os.mkdir(archdir)
+    if not os.path.isdir(archdir):
+        print(f'ERROR: "{archdir}" is not a directory')
+        exit
+    print(f'archiving {len(toots)} toots to {archdir}')
+    for toot in toots: archive_toot(toot, archdir)
 else:    
     for toot in toots: describe_boosts(toot)
     
