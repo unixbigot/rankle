@@ -197,6 +197,13 @@ def archive_toot(t, archdir, noaction=False):
     title = "Mastodon post"
     if 'title' in config and id in config['title']:
         title = config['title'][id]
+    else:
+        # check for a title tag
+        for tag in t.tags:
+            if re.match(r'^title_', tag.name):
+                title = re.sub(r'_', ' ', re.sub(r'^title_','', tag.name)).title()
+
+
     if not noaction and os.path.exists(mdpath):
         if args.verbose>1: print(f"mdpath already exists")
         return
@@ -233,7 +240,7 @@ def archive_toot(t, archdir, noaction=False):
         mdpath = "/dev/stdout"
         mdmode='w'
     with open(mdpath, mdmode) as f:
-        tagstr = " ".join([f"#{tag.name}" for tag in t.tags])
+        tagstr = ' '.join([f'#{tag.name}' for tag in t.tags if not re.match(r'^title_',tag.name)])
         f.write('+++\n')
         f.write(f'date = {t.created_at.astimezone().strftime("%Y-%m-%dT%H:%M:%S")}\n')
         f.write(f'title = "{title}"\n')
