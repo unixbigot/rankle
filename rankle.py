@@ -109,7 +109,7 @@ def get_last_toots(author_id, count=100, tagged=None, min_boosts=0, keep_author=
 
         # Get a/next page of results
         new_toots = mastodon.account_statuses(id=author_id, max_id=max_id, exclude_replies=True, exclude_reblogs=True, tagged=tagged)
-        if args.verbose>1: print(f"  got {len(new_toots)} toots")
+        if args.verbose>1: print(f"  got a page of {len(new_toots)} toots")
 
         # quit collating toots if we have reached the end of the paginated results
         if len(new_toots) == 0: break
@@ -128,7 +128,7 @@ def get_last_toots(author_id, count=100, tagged=None, min_boosts=0, keep_author=
             result_toots.append(candidate_toot)
 
 
-    if args.verbose: print(f"got total of {len(result_toots)} toots")
+    if args.verbose: print(f"fetched total of {len(result_toots)} toots")
     return result_toots
 
 
@@ -205,7 +205,7 @@ def archive_toot(t, archdir, noaction=False):
 
 
     if not noaction and os.path.exists(mdpath):
-        if args.verbose>1: print(f"mdpath already exists")
+        if args.verbose: print(f"Output file {mdpath} already exists")
         return
     if args.verbose:
         print(f'Archive toot {t.id} "{title}" from {pubdate} ({t.reblogs_count} boosts, {t.favourites_count} faves {t.quotes_count} quotes, {t.replies_count} replies) to {mdpath}')
