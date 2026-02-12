@@ -42,6 +42,7 @@ parser.add_argument('--tagged', help="consider toots with tag")
 parser.add_argument('-m', '--most-boosted-first',
                     help="sort by most-boosted-first",action="store_true")
 parser.add_argument('-n', '--noaction', help="Do not write/overwrite any files", action="store_true")
+parser.add_argument('-o', '--overwrite', help="Overwrite (refresh) existing files", action="store_true")
 parser.add_argument('--top', help="describe the top N boosters",type=int, default=5)
 parser.add_argument('--token', nargs="?", default=os.environ["APITOKEN"],
                     help="api authentication token (see server's prefs->dev->new app)")
@@ -185,7 +186,7 @@ def describe_boosts(t, slice_len=72):
 #
 # Acrchive a toot to a file suitable for representation as a Hugo blog entry
 #
-def archive_toot(t, archdir, noaction=False):
+def archive_toot(t, archdir, noaction=False, overwrite=False):
     global config
     acfg = {}
     context = None
@@ -204,7 +205,7 @@ def archive_toot(t, archdir, noaction=False):
                 title = re.sub(r'_', ' ', re.sub(r'^title_','', tag.name)).title()
 
 
-    if not noaction and os.path.exists(mdpath):
+    if not noaction and not overwrite and os.path.exists(mdpath):
         if args.verbose: print(f"Output file {mdpath} already exists")
         return
     if args.verbose:
@@ -238,6 +239,8 @@ def archive_toot(t, archdir, noaction=False):
     mdmode='x'
     if args.noaction:
         mdpath = "/dev/stdout"
+        mdmode='w'
+    if args.overwrite:
         mdmode='w'
     with open(mdpath, mdmode) as f:
         tagstr = ' '.join([f'#{tag.name}' for tag in t.tags if not re.match(r'^title_',tag.name)])
@@ -295,6 +298,6 @@ if args.archive:
             print(f'ERROR: "{archdir}" is not a directory')
             exit
     print(f'archiving {len(toots)} toots to {archdir}')
-    for toot in toots: archive_toot(toot, archdir, noaction=args.noaction)
+    for toot in toots: archive_toot(toot, archdir, noaction=args.noaction, overwrite=args.overwrite)
 else:
     for toot in toots: describe_boosts(toot)
