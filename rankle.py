@@ -15,10 +15,11 @@
 # Mastodon.py API docs: https://mastodonpy.readthedocs.io/en/stable/
 
 import argparse
-import os
-import re
-import pprint
 from mastodon import Mastodon
+import os
+import pprint
+import re
+import subprocess
 import yaml
 
 #
@@ -33,8 +34,8 @@ parser.add_argument('-c', '--count',
                     help="number of toots to examine")
 parser.add_argument('-v', '--verbose', action="count", help="include extra detail",default=0)
 parser.add_argument('--base', help="api base url", nargs="?", default=os.environ["APIURL"])
-parser.add_argument('--config', help="configuration file", nargs="?", default='config.yaml')
 parser.add_argument('--boosts', help="consider toots with at least N boosts",type=int, default=10)
+parser.add_argument('--config', help="configuration file", nargs="?", default='config.yaml')
 parser.add_argument('--followers',
                     type=int, default=1000,
                     help="highlight boosters with at least N followers")
@@ -195,7 +196,10 @@ def archive_toot(t, archdir, noaction=False, overwrite=False):
         acfg = config['archive']
     pubdate = t.created_at.astimezone().strftime('%a %d %b %Y')
     mdpath = f"{archdir}/{id}.md"
+    archive_format = acfg.get('format', 'hugo')
+    content_format = acfg.get('content', 'html')
     title = "Mastodon post"
+    timestamp = None
     if 'title' in config and id in config['title']:
         title = config['title'][id]
     else:
@@ -242,29 +246,50 @@ def archive_toot(t, archdir, noaction=False, overwrite=False):
         mdmode='w'
     if args.overwrite:
         mdmode='w'
+    raw_content = t.content
+    for pat in acfg.get('remove',[]):
+        raw_content = re.sub(pat, '', raw_content)
+    contents = [raw_content]
+    if acfg.get('stats', True):
+        stats = []
+        if (t.favourites_count): stats.append(f'{t.favourites_count}👍 ')
+        if (t.quotes_count): stats.append(f'{t.quotes_count}🙀 ')
+        if (t.reblogs_count): stats.append(f'{t.reblogs_count}📣')
+        if (t.replies_count): stats.append(f'{t.replies_count}🗣️')
+        if len(stats):
+            contents.append(f'<p>{' '.join(stats)}</p>\n')
+    if acfg.get('link', False):
+        contents.append(f'<p><a href="{t.uri}">Original Mastodon toot</a> by <a href="{t.account.uri}">{t.account.display_name}</a></p>\n')
+    if acfg.get('footer', False):
+        contents.append(f'{acfg['footer']}\n')
+    content = "<hr>\n".join(contents);
+    if content_format != 'html':
+        result = subprocess.run(['pandoc','-f','html','-t', content_format],
+                                 input=content,
+                                 capture_output=True,
+                                 text=True,
+                                 check=True)
+        content = result.stdout;
     with open(mdpath, mdmode) as f:
         tagstr = ' '.join([f'#{tag.name}' for tag in t.tags if not re.match(r'^title_',tag.name)])
-        f.write('+++\n')
-        f.write(f'date = {t.created_at.astimezone().strftime("%Y-%m-%dT%H:%M:%S")}\n')
-        f.write(f'title = "{title}"\n')
-        f.write(f'summary = "{tagstr}"\n')
-        f.write('+++\n')
-        f.write(f'{t.content}\n')
-        f.write(f'<hr>\n')
-        if acfg.get('stats', True):
-            stats = []
-            if (t.favourites_count): stats.append(f'{t.favourites_count}👍 ')
-            if (t.quotes_count): stats.append(f'{t.quotes_count}🙀 ')
-            if (t.reblogs_count): stats.append(f'{t.reblogs_count}📣')
-            if (t.replies_count): stats.append(f'{t.replies_count}🗣️')
-            if len(stats):
-                f.write(f'<p>{' '.join(stats)}</p>\n')
-        if acfg.get('link', False):
-            f.write(f'<p><a href="{t.uri}">Original toot</a> by <a href="{t.account.uri}">{t.account.display_name}</a></p>\n')
-        if acfg.get('footer', False):
-            f.write(f'{acfg['footer']}\n')
-
+        if archive_format == 'hugo':
+            f.write('+++\n')
+            f.write(f'date = {t.created_at.astimezone().strftime("%Y-%m-%dT%H:%M:%S")}\n')
+            f.write(f'title = "{title}"\n')
+            f.write(f'summary = "{tagstr}"\n')
+            f.write('+++\n')
+            f.write(content);
+        elif archive_format == 'pandoc-publish':
+            f.write(f'# {title}\n');
+            f.write(content);
+            f.write("\n---\n");
+            f.write(f'*[Originally published]({t.uri}) {t.created_at.astimezone().strftime("%A %d %B %Y, %I:%M%p")}*\n\n')
+        else:
+            f.write(content);
         f.close()
+        if acfg.get('timestamp', False):
+            timestamp = t.created_at.timestamp()
+            os.utime(mdpath, (timestamp, timestamp))
 
 #        print(f"Archive toot {t.id} at {t.created_at.isoformat()}: {t.reblogs_count} boosts, {t.favourites_count} faves")
 
