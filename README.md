@@ -131,3 +131,11 @@ archive:
     112980344498645350: "Extra: Terroir"
     112985239041797729: Damn Your Eyes
 ```
+
+My daily update-my-blog process looks like this:
+
+```
+python rankle.py -c7 --tagged microfiction -a content/Fiction --config fiction-config.yaml
+hugo --environment production --minify
+rsync -av --delete public/ mywebserver:/www/mysite
+```
