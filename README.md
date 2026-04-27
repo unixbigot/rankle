@@ -139,3 +139,43 @@ python rankle.py -c7 --tagged microfiction -a content/Fiction --config fiction-c
 hugo --environment production --minify
 rsync -av --delete public/ mywebserver:/www/mysite
 ```
+
+### Making an ebook from archived posts
+
+1. Download pandoc-publish as a subfolder named publish
+
+2. Make an archive-config file
+
+```
+archive:
+  format: pandoc-publish
+  content: markdown
+  replies: true
+  stats: false
+  timestamp: true
+```
+
+3. Copy the `pandoc-template` folder and modify
+
+```
+cp -av pandoc-template my-book
+```
+
+3. Fetch your posts
+
+``` 
+cd my-book
+../rankle.py --tagged sometag -c0 -vv -a "book/02 Manuscript" --config
+archive-config.yaml
+```
+
+4. Compile your book
+
+```
+python ../publish/build-book.py @args.txt
+```
+
+
+
+
+
