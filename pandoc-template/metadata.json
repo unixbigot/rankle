@@ -1,0 +1,9 @@
+{
+	"lang": "en",
+	"title": "FIXME: Title",
+	"subtitle": "FIXME: subtitle",
+	"volume": "0",
+	"author": "FIXME: author",
+	"cover-image": "cover.png",
+	"css": ["../publish/FigureMark/example/example.css", "../publish/TextIndex/textindex.css", "../series.css", "volume.css"]
+}
